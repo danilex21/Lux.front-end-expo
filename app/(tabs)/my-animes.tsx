@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { Animated, Image, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Card, Chip, IconButton, Modal, Portal, Snackbar, Switch, Text, TextInput, Title } from 'react-native-paper';
+import { Animated, Image, ImageBackground, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Button, Card, Chip, IconButton, Modal, Portal, Snackbar, Text, TextInput, Title } from 'react-native-paper';
 import { styles as globalStyles, theme } from '../../constants/theme';
 import { animeService } from '../../services/animeService';
 import { Anime } from '../../types/anime';
@@ -23,6 +23,7 @@ export default function MyAnimesScreen() {
   const [deletingAnimeId, setDeletingAnimeId] = useState<number | null>(null);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [genreModalVisible, setGenreModalVisible] = useState(false);
   const params = useLocalSearchParams();
 
   useEffect(() => {
@@ -236,32 +237,21 @@ export default function MyAnimesScreen() {
         }
       >
         {filteredAnimes.map((anime) => (
-          <Card
-            key={anime.id}
-            style={[
-              styles.animeCard,
-              anime.isFeatured && styles.featuredCard
-            ]}
-            onPress={() => handleAnimePress(anime)}
-          >
-            <View style={styles.cardContent}>
-              <Image
-                source={{ uri: anime.imageUrl }}
-                style={styles.animeImage}
-                resizeMode="cover"
-              />
-              <View style={styles.animeInfo}>
-                <Title style={styles.animeTitle} numberOfLines={2}>
-                  {anime.title}
-                </Title>
-                <View style={styles.animeDetails}>
-                  <Text style={styles.animeRating}>⭐ {anime.rating}</Text>
-                  <Text style={styles.animeGenre} numberOfLines={1}>
-                    {anime.genre}
-                  </Text>
+          <Card key={anime.id} style={styles.animeCard} onPress={() => handleAnimePress(anime)}>
+            <ImageBackground
+              source={{ uri: anime.imageUrl }}
+              style={styles.cardImage}
+              imageStyle={{ borderRadius: 16 }}
+            >
+              <View style={styles.cardOverlay} />
+              <View style={styles.cardContent}>
+                <Text style={styles.cardTitle}>{anime.title}</Text>
+                <View style={styles.cardInfoRow}>
+                  <Text style={styles.cardScore}>⭐ {anime.rating}</Text>
+                  <Text style={styles.cardGenres}>{anime.genre}</Text>
                 </View>
               </View>
-            </View>
+            </ImageBackground>
           </Card>
         ))}
       </ScrollView>
@@ -270,218 +260,154 @@ export default function MyAnimesScreen() {
         <Modal
           visible={modalVisible}
           onDismiss={() => setModalVisible(false)}
-          contentContainerStyle={styles.modalContainer}
+          contentContainerStyle={{
+            backgroundColor: theme.colors.background,
+            borderRadius: 18,
+            margin: 16,
+            padding: 0,
+            elevation: 0,
+            overflow: 'hidden',
+          }}
         >
           {selectedAnime && (
-            <ScrollView style={styles.modalScroll}>
-              <View style={styles.modalWrapper}>
-                <View style={styles.modalImageContainer}>
-                  <Image
-                    source={{ uri: selectedAnime.imageUrl }}
-                    style={styles.modalImage}
-                    resizeMode="cover"
-                  />
-                  <View style={styles.modalOverlay}>
-                    <IconButton
-                      icon="close"
-                      iconColor={theme.colors.surface}
-                      size={24}
-                      onPress={() => setModalVisible(false)}
-                      style={styles.closeButton}
-                    />
-                    <View style={styles.modalOverlayButtons}>
-                      <IconButton
-                        icon={selectedAnime.isFeatured ? 'star' : 'star-outline'}
-                        iconColor={selectedAnime.isFeatured ? theme.colors.primary : theme.colors.surface}
-                        size={24}
-                        onPress={() => handleToggleFeatured(selectedAnime)}
-                        style={styles.overlayButton}
-                      />
-                      <IconButton
-                        icon={selectedAnime.isFavorite ? 'heart' : 'heart-outline'}
-                        iconColor={selectedAnime.isFavorite ? theme.colors.primary : theme.colors.surface}
-                        size={24}
-                        onPress={() => handleToggleFavorite(selectedAnime)}
-                        style={styles.overlayButton}
-                      />
-                    </View>
-                  </View>
-                </View>
-
-                <View style={styles.modalContent}>
-                  <Text style={styles.modalTitle}>{selectedAnime.title}</Text>
-                  
-                  <View style={styles.modalInfoContainer}>
-                    <View style={styles.modalInfoItem}>
-                      <Text style={styles.modalInfoLabel}>Nota</Text>
-                      <Text style={styles.modalInfoValue}>{selectedAnime.rating}</Text>
-                    </View>
-                    <View style={styles.modalInfoItem}>
-                      <Text style={styles.modalInfoLabel}>Gênero</Text>
-                      <Text style={styles.modalInfoValue} numberOfLines={1}>
-                        {selectedAnime.genre}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={styles.modalDescription}>
-                    <Text style={styles.modalDescriptionTitle}>Sinopse</Text>
-                    <Text style={styles.modalDescriptionText}>
-                      {selectedAnime.description}
-                    </Text>
-                  </View>
-
-                  <View style={styles.modalActions}>
-                    <Button
-                      mode="outlined"
-                      onPress={() => handleEdit(selectedAnime)}
-                      style={styles.modalActionButton}
-                      icon="pencil"
-                    >
-                      Editar
-                    </Button>
-                    <Button
-                      mode="contained"
-                      onPress={() => handleDelete(selectedAnime.id)}
-                      style={[styles.modalActionButton, { backgroundColor: theme.colors.error }]}
-                      icon="delete"
-                      loading={deletingAnimeId === selectedAnime.id}
-                      disabled={deletingAnimeId === selectedAnime.id}
-                    >
-                      Excluir
-                    </Button>
-                  </View>
+            <View>
+              <View style={{ width: '100%', height: 200, position: 'relative' }}>
+                <Image
+                  source={{ uri: selectedAnime.imageUrl }}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="cover"
+                />
+                <IconButton
+                  icon="close"
+                  size={24}
+                  onPress={() => setModalVisible(false)}
+                  style={{ position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.3)' }}
+                  iconColor="#fff"
+                />
+              </View>
+              <View style={{ alignItems: 'center', padding: 24 }}>
+                <Title style={{ fontSize: 20, marginBottom: 8 }}>{selectedAnime.title}</Title>
+                <Text style={{ color: '#FFD700', fontWeight: 'bold', marginBottom: 4 }}>⭐ {selectedAnime.rating}</Text>
+                <Text style={{ color: theme.colors.text, fontSize: 13, marginBottom: 12 }}>{selectedAnime.genre}</Text>
+                <Text style={{ color: theme.colors.text, fontSize: 14, textAlign: 'center', marginBottom: 16 }}>
+                  {selectedAnime.description}
+                </Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12 }}>
+                  <Button mode="outlined" onPress={() => handleEdit(selectedAnime)}>Editar</Button>
+                  <Button mode="contained" onPress={() => handleDelete(selectedAnime.id)} style={{ backgroundColor: theme.colors.error }}>Excluir</Button>
                 </View>
               </View>
-            </ScrollView>
+            </View>
           )}
         </Modal>
 
         <Modal
           visible={editModalVisible}
           onDismiss={() => setEditModalVisible(false)}
-          contentContainerStyle={styles.modalContainer}
+          contentContainerStyle={{
+            backgroundColor: theme.colors.background,
+            borderRadius: 18,
+            margin: 16,
+            padding: 0,
+            elevation: 0,
+            overflow: 'hidden',
+          }}
         >
           {editingAnime && (
-            <ScrollView style={styles.modalScroll}>
-              <View style={styles.modalWrapper}>
-                <View style={styles.modalImageContainer}>
-                  <Image
-                    source={{ uri: editingAnime.imageUrl }}
-                    style={styles.modalImage}
-                    resizeMode="cover"
-                  />
-                  <View style={styles.modalOverlay}>
-                    <IconButton
-                      icon="close"
-                      iconColor={theme.colors.surface}
-                      size={24}
-                      onPress={() => setEditModalVisible(false)}
-                      style={styles.closeButton}
-                    />
-                  </View>
+            <View>
+              <View style={{ width: '100%', height: 200, position: 'relative' }}>
+                <Image
+                  source={{ uri: editingAnime.imageUrl }}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="cover"
+                />
+                <IconButton
+                  icon="close"
+                  size={24}
+                  onPress={() => setEditModalVisible(false)}
+                  style={{ position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.3)' }}
+                  iconColor="#fff"
+                />
+              </View>
+              <View style={{ alignItems: 'center', padding: 24 }}>
+                <Title style={{ fontSize: 20, marginBottom: 12 }}>Editar Anime</Title>
+                <TextInput
+                  label="Título"
+                  value={editingAnime.title}
+                  onChangeText={(text) => setEditingAnime({ ...editingAnime, title: text })}
+                  style={{ width: '100%', marginBottom: 12 }}
+                  mode="outlined"
+                />
+                <TextInput
+                  label="Descrição"
+                  value={editingAnime.description}
+                  onChangeText={(text) => setEditingAnime({ ...editingAnime, description: text })}
+                  multiline
+                  numberOfLines={4}
+                  style={{ width: '100%', marginBottom: 12 }}
+                  mode="outlined"
+                />
+                <TextInput
+                  label="Nota (0-10)"
+                  value={editingAnime.rating}
+                  onChangeText={(text) => {
+                    const num = parseFloat(text);
+                    if (!isNaN(num) && num >= 0 && num <= 10) {
+                      setEditingAnime({ ...editingAnime, rating: text });
+                    }
+                  }}
+                  keyboardType="numeric"
+                  style={{ width: '100%', marginBottom: 12 }}
+                  mode="outlined"
+                />
+                <Button
+                  mode="outlined"
+                  onPress={() => setGenreModalVisible(true)}
+                  style={{ width: '100%', marginBottom: 12 }}
+                >
+                  Selecionar Gêneros
+                </Button>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16, justifyContent: 'center' }}>
+                  {selectedGenres.map((genre) => (
+                    <Chip key={genre} style={{ margin: 2 }}>{genre}</Chip>
+                  ))}
                 </View>
-
-                <View style={styles.modalContent}>
-                  <Text style={styles.modalTitle}>Editar Anime</Text>
-                  
-                  <TextInput
-                    label="Título"
-                    value={editingAnime.title}
-                    onChangeText={(text) => setEditingAnime({ ...editingAnime, title: text })}
-                    style={styles.input}
-                    mode="outlined"
-                  />
-
-                  <TextInput
-                    label="Descrição"
-                    value={editingAnime.description}
-                    onChangeText={(text) => setEditingAnime({ ...editingAnime, description: text })}
-                    multiline
-                    numberOfLines={4}
-                    style={styles.input}
-                    mode="outlined"
-                  />
-
-                  <TextInput
-                    label="Nota (0-10)"
-                    value={editingAnime.rating}
-                    onChangeText={(text) => {
-                      const num = parseFloat(text);
-                      if (!isNaN(num) && num >= 0 && num <= 10) {
-                        setEditingAnime({ ...editingAnime, rating: text });
-                      }
-                    }}
-                    keyboardType="numeric"
-                    style={styles.input}
-                    mode="outlined"
-                  />
-
-                  <View style={styles.genreContainer}>
-                    <Text style={styles.genreLabel}>Gêneros</Text>
-                    <View style={styles.genreChips}>
-                      {['Ação', 'Aventura', 'Comédia', 'Drama', 'Fantasia', 'Horror', 'Mistério', 'Romance', 'Sci-Fi', 'Slice of Life'].map((genre) => (
-                        <Chip
-                          key={genre}
-                          selected={selectedGenres.includes(genre)}
-                          onPress={() => toggleGenre(genre)}
-                          style={[
-                            styles.genreChip,
-                            selectedGenres.includes(genre) && styles.selectedGenreChip
-                          ]}
-                          textStyle={[
-                            styles.genreChipText,
-                            selectedGenres.includes(genre) && styles.selectedGenreChipText
-                          ]}
-                        >
-                          {genre}
-                        </Chip>
-                      ))}
-                    </View>
-                  </View>
-
-                  <View style={styles.modalInfoContainer}>
-                    <View style={styles.modalInfoItem}>
-                      <Text style={styles.modalInfoLabel}>Favorito</Text>
-                      <Switch
-                        value={editingAnime.isFavorite}
-                        onValueChange={(value) => setEditingAnime({ ...editingAnime, isFavorite: value })}
-                        color={theme.colors.primary}
-                      />
-                    </View>
-                    <View style={styles.modalInfoItem}>
-                      <Text style={styles.modalInfoLabel}>Destaque</Text>
-                      <Switch
-                        value={editingAnime.isFeatured}
-                        onValueChange={(value) => setEditingAnime({ ...editingAnime, isFeatured: value })}
-                        color={theme.colors.primary}
-                      />
-                    </View>
-                  </View>
-
-                  <View style={styles.modalActions}>
-                    <Button
-                      mode="outlined"
-                      onPress={() => setEditModalVisible(false)}
-                      style={styles.modalActionButton}
-                      disabled={loading}
-                    >
-                      Cancelar
-                    </Button>
-                    <Button
-                      mode="contained"
-                      onPress={handleSaveEdit}
-                      style={styles.modalActionButton}
-                      loading={loading}
-                      disabled={loading}
-                    >
-                      Salvar
-                    </Button>
-                  </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12 }}>
+                  <Button mode="outlined" onPress={() => setEditModalVisible(false)}>Cancelar</Button>
+                  <Button mode="contained" onPress={handleSaveEdit}>Salvar</Button>
                 </View>
               </View>
-            </ScrollView>
+            </View>
           )}
+        </Modal>
+
+        <Modal
+          visible={genreModalVisible}
+          onDismiss={() => setGenreModalVisible(false)}
+          contentContainerStyle={{
+            backgroundColor: theme.colors.background,
+            borderRadius: 18,
+            margin: 32,
+            padding: 24,
+            elevation: 4,
+            alignItems: 'center',
+          }}
+        >
+          <Title style={{ fontSize: 18, marginBottom: 16 }}>Selecione os Gêneros</Title>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', marginBottom: 24 }}>
+            {['Ação', 'Aventura', 'Comédia', 'Drama', 'Fantasia', 'Horror', 'Mistério', 'Romance', 'Sci-Fi', 'Slice of Life', 'Suspense', 'Esportes', 'Sobrenatural', 'Psicológico', 'Mecha', 'Musical'].map((genre) => (
+              <Chip
+                key={genre}
+                selected={selectedGenres.includes(genre)}
+                onPress={() => toggleGenre(genre)}
+                style={{ margin: 4 }}
+                mode={selectedGenres.includes(genre) ? 'flat' : 'outlined'}
+              >
+                {genre}
+              </Chip>
+            ))}
+          </View>
+          <Button mode="contained" onPress={() => setGenreModalVisible(false)} style={{ width: '100%' }}>Confirmar</Button>
         </Modal>
       </Portal>
 
@@ -506,7 +432,8 @@ export default function MyAnimesScreen() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: theme.spacing.lg,
+    paddingTop: theme.spacing.sm,
+    paddingBottom: theme.spacing.lg,
   },
   header: {
     flexDirection: 'row',
@@ -527,42 +454,63 @@ const styles = StyleSheet.create({
     marginRight: theme.spacing.sm,
   },
   animeCard: {
-    marginBottom: theme.spacing.md,
-    backgroundColor: theme.colors.card,
-    elevation: 2,
+    width: '90%',
+    alignSelf: 'center',
+    marginBottom: 20,
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 4,
+  },
+  cardImage: {
+    width: '100%',
+    height: 120,
+    justifyContent: 'flex-end',
+    borderRadius: 16,
+    alignItems: 'center',
+    overflow: 'hidden',
+  },
+  cardOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(36, 35, 35, 0.55)',
+    borderRadius: 16,
   },
   cardContent: {
+    position: 'absolute',
+    left: 0,
+    bottom: 0,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    backgroundColor: 'rgba(36, 34, 34, 0.55)',
+    borderBottomLeftRadius: 16,
+    borderTopRightRadius: 12,
+    maxWidth: '100%',
+    alignItems: 'flex-start',
+    justifyContent: 'flex-start',
+    width: '100%',
+  },
+  cardTitle: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 2,
+    flexShrink: 0,
+  },
+  cardInfoRow: {
     flexDirection: 'row',
-    padding: theme.spacing.sm,
-  },
-  animeImage: {
-    width: 100,
-    height: 150,
-    borderRadius: theme.borderRadius.sm,
-  },
-  animeInfo: {
-    flex: 1,
-    marginLeft: theme.spacing.md,
-    justifyContent: 'center',
-  },
-  animeDetails: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 4,
+    marginBottom: 2,
   },
-  animeTitle: {
-    flex: 1,
-    marginRight: theme.spacing.sm,
-    ...theme.typography.subtitle,
+  cardScore: {
+    color: '#FFD700',
+    fontWeight: 'bold',
+    marginRight: 4,
+    fontSize: 14,
   },
-  animeRating: {
-    ...theme.typography.caption,
-    color: theme.colors.primary,
-    marginBottom: theme.spacing.xs,
-  },
-  animeGenre: {
-    ...theme.typography.caption,
-    color: theme.colors.text,
+  cardGenres: {
+    color: '#fff',
+    fontSize: 12,
+    flexShrink: 1,
   },
   modalContainer: {
     backgroundColor: theme.colors.background,
@@ -683,10 +631,6 @@ const styles = StyleSheet.create({
   },
   cardButtons: {
     flexDirection: 'row',
-  },
-  featuredCard: {
-    borderWidth: 2,
-    borderColor: theme.colors.primary,
   },
   modalOverlayButtons: {
     flexDirection: 'row',

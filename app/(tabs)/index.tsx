@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Dimensions, Image, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Card, Chip, IconButton, Modal, Paragraph, Portal, Text, TextInput, Title } from 'react-native-paper';
+import { ActivityIndicator, Button, Card, IconButton, Modal, Paragraph, Portal, Text, Title } from 'react-native-paper';
 import { styles as globalStyles, theme } from '../../constants/theme';
 import { animeService } from '../../services/animeService';
 import { Anime, AnimeSearchResult } from '../../types/anime';
@@ -9,8 +9,8 @@ import { Anime, AnimeSearchResult } from '../../types/anime';
 const { width } = Dimensions.get('window');
 const FEATURED_WIDTH = width;
 const FEATURED_HEIGHT = width * 0.5;
-const CARD_WIDTH = width * 0.3;
-const CARD_HEIGHT = CARD_WIDTH * 1.3;
+const CARD_WIDTH = width * 0.42;
+const CARD_HEIGHT = CARD_WIDTH * 1.45;
 
 export default function HomeScreen() {
   const [topAnimes, setTopAnimes] = useState<AnimeSearchResult[]>([]);
@@ -39,6 +39,8 @@ export default function HomeScreen() {
   ]);
   const router = useRouter();
   const [featuredSynopsis, setFeaturedSynopsis] = useState<string>('');
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const [carouselScrollX, setCarouselScrollX] = useState(0);
 
   useEffect(() => {
     loadAnimes();
@@ -180,15 +182,16 @@ export default function HomeScreen() {
     const ref = type === 'top' ? topScrollViewRef : popularScrollViewRef;
     if (ref.current) {
       ref.current.scrollTo({
-        x: index * (CARD_WIDTH + theme.spacing.md),
+        x: index * (CARD_WIDTH + theme.spacing.sm),
         animated: true,
       });
+      if (type === 'top') setCurrentTopIndex(index);
+      else setCurrentPopularIndex(index);
     }
   };
 
   const handlePrev = (type: 'top' | 'popular') => {
     const currentIndex = type === 'top' ? currentTopIndex : currentPopularIndex;
-    const animes = type === 'top' ? topAnimes : popularAnimes;
     if (currentIndex > 0) {
       scrollToIndex(currentIndex - 1, type);
     }
@@ -271,61 +274,70 @@ export default function HomeScreen() {
             size={32}
             onPress={() => handlePrev(type)}
             style={[styles.navButton, styles.leftButton]}
+            containerColor="#fff"
             disabled={currentIndex === 0}
           />
-          
-          <ScrollView
+          <Animated.ScrollView
             ref={scrollViewRef}
             horizontal
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.horizontalScroll}
             pagingEnabled
             snapToInterval={CARD_WIDTH + theme.spacing.sm}
             decelerationRate="fast"
-            onScroll={(e) => handleScroll(e, type)}
+            onScroll={Animated.event(
+              [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+              {
+                useNativeDriver: true,
+                listener: (e: any) => setCarouselScrollX(e.nativeEvent.contentOffset.x),
+              }
+            )}
             scrollEventThrottle={16}
+            contentContainerStyle={{ alignItems: 'center', paddingVertical: 0, paddingRight: 48 }}
+            style={{ flexGrow: 0 }}
           >
-            {animes.map((anime) => (
-              <Card
-                key={anime.mal_id}
-                style={styles.animeCard}
-                onPress={() => handleAnimePress(anime)}
-              >
-                <Image
-                  source={{ uri: anime.images.jpg.large_image_url || anime.images.jpg.image_url }}
-                  style={styles.animeImage}
-                />
-                <View style={styles.animeInfo}>
-                  <Title style={styles.animeTitle} numberOfLines={2}>
-                    {anime.title}
-                  </Title>
-                  <Text style={styles.animeRating}>
-                    ⭐ {anime.score}
-                  </Text>
-                </View>
-              </Card>
-            ))}
-          </ScrollView>
-
+            {animes.map((anime, index) => {
+              // Calcula escala para o card ativo
+              const inputRange = [
+                (index - 1) * (CARD_WIDTH + theme.spacing.sm),
+                index * (CARD_WIDTH + theme.spacing.sm),
+                (index + 1) * (CARD_WIDTH + theme.spacing.sm),
+              ];
+              const scale = scrollX.interpolate({
+                inputRange,
+                outputRange: [0.96, 1, 0.96],
+                extrapolate: 'clamp',
+              });
+              return (
+                <Animated.View key={anime.mal_id} style={{ transform: [{ scale }], width: CARD_WIDTH, marginHorizontal: 2 }}>
+                  <Card
+                    style={styles.animeCard}
+                    onPress={() => handleAnimePress(anime)}
+                  >
+                    <Image
+                      source={{ uri: anime.images.jpg.large_image_url || anime.images.jpg.image_url }}
+                      style={styles.cardImage}
+                    />
+                    <View style={styles.animeInfo}>
+                      <Title style={styles.animeTitle} numberOfLines={2}>
+                        {anime.title}
+                      </Title>
+                      <Text style={styles.animeRating}>
+                        ⭐ {anime.score}
+                      </Text>
+                    </View>
+                  </Card>
+                </Animated.View>
+              );
+            })}
+          </Animated.ScrollView>
           <IconButton
             icon="chevron-right"
             size={32}
             onPress={() => handleNext(type)}
             style={[styles.navButton, styles.rightButton]}
+            containerColor="#fff"
             disabled={currentIndex === animes.length - 1}
           />
-        </View>
-
-        <View style={styles.pagination}>
-          {animes.map((_, index) => (
-            <View
-              key={index}
-              style={[
-                styles.paginationDot,
-                index === currentIndex && styles.paginationDotActive,
-              ]}
-            />
-          ))}
         </View>
       </View>
     );
@@ -358,148 +370,44 @@ export default function HomeScreen() {
                     style={styles.modalImage}
                     resizeMode="cover"
                   />
-                  <View style={styles.modalOverlay}>
-                    <IconButton
-                      icon="close"
-                      iconColor={theme.colors.surface}
-                      size={24}
-                      onPress={() => {
-                        setModalVisible(false);
-                        setEditMode(false);
-                        setEditedAnime(null);
-                      }}
-                      style={styles.closeButton}
-                    />
-                  </View>
+                  <IconButton
+                    icon="close"
+                    iconColor={theme.colors.surface}
+                    size={28}
+                    onPress={() => {
+                      setModalVisible(false);
+                      setEditMode(false);
+                      setEditedAnime(null);
+                    }}
+                    style={styles.closeButton}
+                  />
                 </View>
-
                 <View style={styles.modalContent}>
-                  {editMode ? (
-                    <View style={styles.editContainer}>
-                      <View style={styles.editSection}>
-                        <Text style={styles.editSectionTitle}>Informações Básicas</Text>
-                        <TextInput
-                          mode="outlined"
-                          label="Título"
-                          value={editedAnime.title}
-                          onChangeText={(text) => setEditedAnime({ ...editedAnime, title: text })}
-                          style={styles.modalInput}
-                          left={<TextInput.Icon icon="format-title" />}
-                          outlineColor={theme.colors.primary}
-                          activeOutlineColor={theme.colors.primary}
-                        />
-                        <TextInput
-                          mode="outlined"
-                          label="Nota"
-                          value={editedAnime.rating}
-                          onChangeText={(text) => setEditedAnime({ ...editedAnime, rating: text })}
-                          keyboardType="numeric"
-                          style={styles.modalInput}
-                          left={<TextInput.Icon icon="star" />}
-                          outlineColor={theme.colors.primary}
-                          activeOutlineColor={theme.colors.primary}
-                        />
-                      </View>
-
-                      <View style={styles.editSection}>
-                        <Text style={styles.editSectionTitle}>Gêneros</Text>
-                        <View style={styles.genresContainer}>
-                          {availableGenres.map((genre) => (
-                            <Chip
-                              key={genre}
-                              selected={selectedGenres.includes(genre)}
-                              onPress={() => {
-                                if (selectedGenres.includes(genre)) {
-                                  setSelectedGenres(selectedGenres.filter(g => g !== genre));
-                                } else {
-                                  setSelectedGenres([...selectedGenres, genre]);
-                                }
-                              }}
-                              style={styles.genreChip}
-                              mode="outlined"
-                            >
-                              {genre}
-                            </Chip>
-                          ))}
-                        </View>
-                      </View>
-
-                      <View style={styles.editSection}>
-                        <Text style={styles.editSectionTitle}>Sinopse</Text>
-                        <TextInput
-                          mode="outlined"
-                          label="Descrição"
-                          value={editedAnime.description}
-                          onChangeText={(text) => setEditedAnime({ ...editedAnime, description: text })}
-                          multiline
-                          numberOfLines={6}
-                          style={[styles.modalInput, styles.descriptionInput]}
-                          left={<TextInput.Icon icon="text" />}
-                          outlineColor={theme.colors.primary}
-                          activeOutlineColor={theme.colors.primary}
-                        />
-                      </View>
-
-                      <View style={styles.modalActions}>
-                        <Button
-                          mode="outlined"
-                          onPress={() => {
-                            setEditMode(false);
-                            setEditedAnime({
-                              title: selectedAnime.title,
-                              description: selectedAnime.synopsis || '',
-                              rating: selectedAnime.score?.toString() || '0',
-                              genre: selectedGenres.join(', '),
-                            });
-                          }}
-                          style={styles.modalActionButton}
-                        >
-                          Cancelar
-                        </Button>
-                        <Button
-                          mode="contained"
-                          onPress={handleSaveToCollection}
-                          style={styles.modalActionButton}
-                        >
-                          Salvar
-                        </Button>
-                      </View>
-                    </View>
-                  ) : (
-                    <>
-                      <Title style={styles.modalTitle}>{editedAnime.title}</Title>
-                      <View style={styles.modalInfoContainer}>
-                        <View style={styles.modalInfoItem}>
-                          <Text style={styles.modalInfoLabel}>Nota</Text>
-                          <Text style={styles.modalInfoValue}>⭐ {editedAnime.rating}</Text>
-                        </View>
-                        <View style={styles.modalInfoItem}>
-                          <Text style={styles.modalInfoLabel}>Gêneros</Text>
-                          <Text style={styles.modalInfoValue}>{editedAnime.genre}</Text>
-                        </View>
-                      </View>
-                      <View style={styles.modalDescription}>
-                        <Text style={styles.modalDescriptionTitle}>Sinopse</Text>
-                        <Text style={styles.modalDescriptionText}>{editedAnime.description}</Text>
-                      </View>
-                      <View style={styles.modalActions}>
-                        <Button
-                          mode="outlined"
-                          onPress={() => setModalVisible(false)}
-                          style={styles.modalActionButton}
-                        >
-                          Cancelar
-                        </Button>
-                        <Button
-                          mode="contained"
-                          onPress={() => setEditMode(true)}
-                          style={styles.modalActionButton}
-                        >
-                          Editar
-                        </Button>
-                      </View>
-                    </>
-                  )}
+                  <Title style={styles.modalTitle}>{editedAnime.title}</Title>
+                  <View style={styles.modalInfoRow}>
+                    <Text style={styles.modalScore}>⭐ {editedAnime.rating}</Text>
+                    <Text style={styles.modalGenres}>{editedAnime.genre}</Text>
+                  </View>
+                  <View style={styles.modalDescription}>
+                    <Text style={styles.modalDescriptionTitle}>Sinopse</Text>
+                    <Text style={styles.modalDescriptionText}>{editedAnime.description}</Text>
+                  </View>
+                  <View style={styles.modalActions}>
+                    <Button
+                      mode="outlined"
+                      onPress={() => setModalVisible(false)}
+                      style={styles.modalActionButton}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button
+                      mode="contained"
+                      onPress={handleSaveToCollection}
+                      style={styles.modalActionButton}
+                    >
+                      Salvar
+                    </Button>
+                  </View>
                 </View>
               </View>
             </ScrollView>
@@ -588,38 +496,18 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 20,
   },
-  carouselContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: theme.spacing.md,
-  },
-  navButton: {
-    backgroundColor: theme.colors.surface,
-    elevation: 4,
-    marginHorizontal: theme.spacing.sm,
-  },
-  leftButton: {
-    marginLeft: theme.spacing.md,
-  },
-  rightButton: {
-    marginRight: theme.spacing.md,
-  },
-  horizontalScroll: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.md,
-  },
   animeCard: {
     width: CARD_WIDTH,
-    marginRight: theme.spacing.sm,
+    height: CARD_HEIGHT,
+    marginHorizontal: 2,
     backgroundColor: theme.colors.card,
-    elevation: 2,
-    borderRadius: theme.borderRadius.md,
+    elevation: 3,
+    borderRadius: theme.borderRadius.lg,
     overflow: 'hidden',
   },
-  animeImage: {
+  cardImage: {
     width: '100%',
-    height: CARD_HEIGHT,
+    height: 150,
   },
   animeInfo: {
     padding: theme.spacing.xs,
@@ -670,8 +558,14 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     backgroundColor: theme.colors.background,
-    margin: 0,
-    flex: 1,
+    borderRadius: 24,
+    margin: 16,
+    padding: 0,
+    elevation: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
   },
   modalScroll: {
     flex: 1,
@@ -681,78 +575,69 @@ const styles = StyleSheet.create({
   },
   modalImageContainer: {
     position: 'relative',
-    height: 300,
+    height: 220,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    overflow: 'hidden',
   },
   modalImage: {
     width: '100%',
     height: '100%',
   },
-  modalOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: theme.spacing.md,
-    backgroundColor: 'rgba(0,0,0,0.3)',
-  },
   closeButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
     backgroundColor: 'rgba(0,0,0,0.5)',
+    zIndex: 2,
   },
   modalContent: {
-    padding: theme.spacing.lg,
+    padding: 24,
   },
   modalTitle: {
-    ...theme.typography.title,
-    marginBottom: theme.spacing.lg,
-  },
-  modalInfoContainer: {
-    flexDirection: 'row',
-    marginBottom: theme.spacing.lg,
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.md,
-  },
-  modalInfoItem: {
-    flex: 1,
-    marginHorizontal: theme.spacing.sm,
-  },
-  modalInfoLabel: {
-    ...theme.typography.caption,
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 12,
     color: theme.colors.text,
-    marginBottom: theme.spacing.xs,
+    textAlign: 'center',
   },
-  modalInfoValue: {
-    ...theme.typography.text,
-    color: theme.colors.primary,
-    fontWeight: '600',
+  modalInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  modalScore: {
+    color: '#FFD700',
+    fontWeight: 'bold',
+    fontSize: 18,
+  },
+  modalGenres: {
+    color: theme.colors.text,
+    fontSize: 14,
+    marginLeft: 8,
   },
   modalDescription: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: 20,
   },
   modalDescriptionTitle: {
-    ...theme.typography.subtitle,
-    marginBottom: theme.spacing.sm,
+    fontWeight: 'bold',
+    marginBottom: 4,
+    color: theme.colors.primary,
   },
   modalDescriptionText: {
-    ...theme.typography.text,
-    lineHeight: 24,
     color: theme.colors.text,
-  },
-  modalInput: {
-    marginBottom: theme.spacing.md,
-    backgroundColor: theme.colors.surface,
-    fontSize: 16,
+    lineHeight: 22,
   },
   modalActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: theme.spacing.lg,
+    marginTop: 16,
   },
   modalActionButton: {
     flex: 1,
-    marginHorizontal: theme.spacing.sm,
+    marginHorizontal: 8,
   },
   editContainer: {
     flex: 1,
@@ -782,5 +667,24 @@ const styles = StyleSheet.create({
   },
   genreChip: {
     margin: 2,
+  },
+  carouselContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 0,
+    paddingVertical: 0,
+  },
+  navButton: {
+    elevation: 4,
+    marginHorizontal: theme.spacing.xs,
+    zIndex: 2,
+    borderRadius: 50,
+  },
+  leftButton: {
+    marginLeft: theme.spacing.md,
+  },
+  rightButton: {
+    marginRight: theme.spacing.md,
   },
 });
