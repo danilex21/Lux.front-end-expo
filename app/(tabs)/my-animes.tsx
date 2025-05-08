@@ -246,7 +246,11 @@ export default function MyAnimesScreen() {
           >
             <View style={styles.cardContent}>
               <Image
+<<<<<<< HEAD
                 source={{ uri: anime.imageUrl }}
+=======
+                source={{ uri: anime.image }}
+>>>>>>> 458815e72220a8e9989757169d9dff5ead8b7e00
                 style={styles.animeImage}
               />
               <View style={styles.animeInfo}>
@@ -292,7 +296,11 @@ export default function MyAnimesScreen() {
               <View style={styles.modalWrapper}>
                 <View style={styles.modalImageContainer}>
                   <Image
+<<<<<<< HEAD
                     source={{ uri: selectedAnime.imageUrl }}
+=======
+                    source={{ uri: selectedAnime.image }}
+>>>>>>> 458815e72220a8e9989757169d9dff5ead8b7e00
                     style={styles.modalImage}
                     resizeMode="cover"
                   />
@@ -382,7 +390,11 @@ export default function MyAnimesScreen() {
               <View style={styles.modalWrapper}>
                 <View style={styles.modalImageContainer}>
                   <Image
+<<<<<<< HEAD
                     source={{ uri: editingAnime.imageUrl }}
+=======
+                    source={{ uri: editingAnime.image }}
+>>>>>>> 458815e72220a8e9989757169d9dff5ead8b7e00
                     style={styles.modalImage}
                     resizeMode="cover"
                   />
