@@ -1,11 +1,7 @@
 import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import React, { useCallback, useState } from 'react';
-<<<<<<< HEAD
 import { Alert, Animated, Image, ScrollView, StyleSheet, View } from 'react-native';
-=======
-import { Animated, Image, ScrollView, StyleSheet, View } from 'react-native';
->>>>>>> 458815e72220a8e9989757169d9dff5ead8b7e00
 import { ActivityIndicator, Button, Card, Chip, IconButton, Modal, Portal, Searchbar, Snackbar, Switch, Text, TextInput } from 'react-native-paper';
 import { styles as globalStyles, theme } from '../../constants/theme';
 import { animeService } from '../../services/animeService';
@@ -37,11 +33,7 @@ export default function AddAnimeScreen() {
     description: '',
     rating: '',
     genre: '',
-<<<<<<< HEAD
     imageUrl: '',
-=======
-    image: '',
->>>>>>> 458815e72220a8e9989757169d9dff5ead8b7e00
     isFavorite: false,
     mal_id: 0,
   });
@@ -112,7 +104,6 @@ export default function AddAnimeScreen() {
     }
   };
 
-<<<<<<< HEAD
   const handleAnimeSelect = async (anime: AnimeSearchResult) => {
     try {
       // Traduzir a sinopse
@@ -168,62 +159,13 @@ export default function AddAnimeScreen() {
       setSearchResults([]);
       
       // Navegar para a tela Meus Animes com parâmetro de atualização
-=======
-  const handleSelectAnime = useCallback((anime: AnimeSearchResult) => {
-    setSelectedAnime(anime);
-    setModalVisible(true);
-  }, []);
-
-  const handleConfirmSelection = async () => {
-    if (!selectedAnime) return;
-    
-    try {
-      setLoading(true);
-      setError(null);
-      setModalVisible(false);
-
-      const existingAnimes = await animeService.getAnimes();
-      const animeExists = existingAnimes.some(anime => anime.mal_id === selectedAnime.mal_id);
-
-      if (animeExists) {
-        showSnackbar('Este anime já está na sua coleção!', 'error');
-        setSelectedAnime(null);
-        setLoading(false);
-        return;
-      }
-
-      const translatedDescription = await translateText(selectedAnime.synopsis || '');
-      
-      const animeData: Omit<Anime, 'id'> = {
-        title: selectedAnime.title,
-        description: translatedDescription.substring(0, 500),
-        rating: selectedAnime.score?.toString() || '0',
-        genre: selectedAnime.genres?.map(g => g.name).join(', ') || '',
-        image: selectedAnime.images?.jpg?.image_url || 'https://via.placeholder.com/300x400',
-        isFavorite: false,
-        mal_id: selectedAnime.mal_id,
-      };
-
-      await animeService.saveAnime(animeData as Anime);
-      setSelectedAnime(null);
-      setSearchResults([]);
-      setSearchQuery('');
-      showSnackbar('Anime adicionado com sucesso!', 'success');
-      
->>>>>>> 458815e72220a8e9989757169d9dff5ead8b7e00
       router.replace({
         pathname: '/my-animes',
         params: { refresh: Date.now() }
       });
     } catch (err) {
-<<<<<<< HEAD
       console.error('Erro ao salvar anime:', err);
       Alert.alert('Erro', 'Não foi possível salvar o anime. Tente novamente.');
-=======
-      setError('Erro ao salvar anime');
-      showSnackbar('Erro ao salvar anime', 'error');
-      console.error(err);
->>>>>>> 458815e72220a8e9989757169d9dff5ead8b7e00
     } finally {
       setLoading(false);
     }
@@ -253,11 +195,7 @@ export default function AddAnimeScreen() {
         description: animeData.description,
         rating: rating.toString(),
         genre: selectedGenres.join(', '),
-<<<<<<< HEAD
         imageUrl: selectedImage || 'https://via.placeholder.com/300x400',
-=======
-        image: selectedImage || 'https://via.placeholder.com/300x400',
->>>>>>> 458815e72220a8e9989757169d9dff5ead8b7e00
         isFavorite: animeData.isFavorite,
         isFeatured: false,
       };
@@ -268,11 +206,7 @@ export default function AddAnimeScreen() {
         description: '',
         rating: '',
         genre: '',
-<<<<<<< HEAD
         imageUrl: '',
-=======
-        image: '',
->>>>>>> 458815e72220a8e9989757169d9dff5ead8b7e00
         isFavorite: false,
         mal_id: 0,
       });
@@ -323,11 +257,7 @@ export default function AddAnimeScreen() {
         setSelectedImage(result.assets[0].uri);
         setAnimeData(prev => ({
           ...prev,
-<<<<<<< HEAD
           imageUrl: result.assets[0].uri
-=======
-          image: result.assets[0].uri
->>>>>>> 458815e72220a8e9989757169d9dff5ead8b7e00
         }));
       }
     } catch (err) {
@@ -368,11 +298,7 @@ export default function AddAnimeScreen() {
                 <Card
                   key={`${anime.mal_id}-${index}`}
                   style={styles.resultCard}
-<<<<<<< HEAD
                   onPress={() => handleAnimeSelect(anime)}
-=======
-                  onPress={() => handleSelectAnime(anime)}
->>>>>>> 458815e72220a8e9989757169d9dff5ead8b7e00
                 >
                   <Card.Content style={styles.resultCardContent}>
                     <Image
@@ -411,11 +337,7 @@ export default function AddAnimeScreen() {
                         description: '',
                         rating: '',
                         genre: '',
-<<<<<<< HEAD
                         imageUrl: '',
-=======
-                        image: '',
->>>>>>> 458815e72220a8e9989757169d9dff5ead8b7e00
                         isFavorite: false,
                         mal_id: 0,
                       });
@@ -438,11 +360,7 @@ export default function AddAnimeScreen() {
                         style={styles.removeImageButton}
                         onPress={() => {
                           setSelectedImage(null);
-<<<<<<< HEAD
                           setAnimeData(prev => ({ ...prev, imageUrl: '' }));
-=======
-                          setAnimeData(prev => ({ ...prev, image: '' }));
->>>>>>> 458815e72220a8e9989757169d9dff5ead8b7e00
                         }}
                       />
                     </View>

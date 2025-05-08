@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Animated, Image, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Card, Chip, IconButton, Modal, Paragraph, Portal, Snackbar, Switch, Text, TextInput, Title } from 'react-native-paper';
+import { ActivityIndicator, Button, Card, Chip, IconButton, Modal, Portal, Snackbar, Switch, Text, TextInput, Title } from 'react-native-paper';
 import { styles as globalStyles, theme } from '../../constants/theme';
 import { animeService } from '../../services/animeService';
 import { Anime } from '../../types/anime';
@@ -246,39 +246,20 @@ export default function MyAnimesScreen() {
           >
             <View style={styles.cardContent}>
               <Image
-<<<<<<< HEAD
                 source={{ uri: anime.imageUrl }}
-=======
-                source={{ uri: anime.image }}
->>>>>>> 458815e72220a8e9989757169d9dff5ead8b7e00
                 style={styles.animeImage}
+                resizeMode="cover"
               />
               <View style={styles.animeInfo}>
-                <View style={styles.titleContainer}>
-                  <Title style={styles.animeTitle} numberOfLines={2}>
-                    {anime.title}
-                  </Title>
-                  <View style={styles.cardButtons}>
-                    <IconButton
-                      icon={anime.isFeatured ? 'star' : 'star-outline'}
-                      iconColor={anime.isFeatured ? theme.colors.primary : theme.colors.text}
-                      size={20}
-                      onPress={() => handleToggleFeatured(anime)}
-                    />
-                    <IconButton
-                      icon={anime.isFavorite ? 'heart' : 'heart-outline'}
-                      iconColor={anime.isFavorite ? theme.colors.primary : theme.colors.text}
-                      size={20}
-                      onPress={() => handleToggleFavorite(anime)}
-                    />
-                  </View>
+                <Title style={styles.animeTitle} numberOfLines={2}>
+                  {anime.title}
+                </Title>
+                <View style={styles.animeDetails}>
+                  <Text style={styles.animeRating}>⭐ {anime.rating}</Text>
+                  <Text style={styles.animeGenre} numberOfLines={1}>
+                    {anime.genre}
+                  </Text>
                 </View>
-                <Paragraph style={styles.animeRating}>
-                  Nota: {anime.rating}
-                </Paragraph>
-                <Paragraph style={styles.animeGenre} numberOfLines={1}>
-                  {anime.genre}
-                </Paragraph>
               </View>
             </View>
           </Card>
@@ -296,11 +277,7 @@ export default function MyAnimesScreen() {
               <View style={styles.modalWrapper}>
                 <View style={styles.modalImageContainer}>
                   <Image
-<<<<<<< HEAD
                     source={{ uri: selectedAnime.imageUrl }}
-=======
-                    source={{ uri: selectedAnime.image }}
->>>>>>> 458815e72220a8e9989757169d9dff5ead8b7e00
                     style={styles.modalImage}
                     resizeMode="cover"
                   />
@@ -390,11 +367,7 @@ export default function MyAnimesScreen() {
               <View style={styles.modalWrapper}>
                 <View style={styles.modalImageContainer}>
                   <Image
-<<<<<<< HEAD
                     source={{ uri: editingAnime.imageUrl }}
-=======
-                    source={{ uri: editingAnime.image }}
->>>>>>> 458815e72220a8e9989757169d9dff5ead8b7e00
                     style={styles.modalImage}
                     resizeMode="cover"
                   />
@@ -572,10 +545,10 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.md,
     justifyContent: 'center',
   },
-  titleContainer: {
+  animeDetails: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
   },
   animeTitle: {
     flex: 1,

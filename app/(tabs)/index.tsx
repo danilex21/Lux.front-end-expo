@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Dimensions, Image, ScrollView, StyleSheet, TextInput, View } from 'react-native';
-import { ActivityIndicator, Button, Card, Chip, IconButton, Modal, Paragraph, Portal, Text, Title } from 'react-native-paper';
+import { Animated, Dimensions, Image, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Button, Card, Chip, IconButton, Modal, Paragraph, Portal, Text, TextInput, Title } from 'react-native-paper';
 import { styles as globalStyles, theme } from '../../constants/theme';
 import { animeService } from '../../services/animeService';
 import { Anime, AnimeSearchResult } from '../../types/anime';
@@ -379,22 +379,22 @@ export default function HomeScreen() {
                       <View style={styles.editSection}>
                         <Text style={styles.editSectionTitle}>Informações Básicas</Text>
                         <TextInput
+                          mode="outlined"
                           label="Título"
                           value={editedAnime.title}
                           onChangeText={(text) => setEditedAnime({ ...editedAnime, title: text })}
                           style={styles.modalInput}
-                          mode="outlined"
                           left={<TextInput.Icon icon="format-title" />}
                           outlineColor={theme.colors.primary}
                           activeOutlineColor={theme.colors.primary}
                         />
                         <TextInput
+                          mode="outlined"
                           label="Nota"
                           value={editedAnime.rating}
                           onChangeText={(text) => setEditedAnime({ ...editedAnime, rating: text })}
                           keyboardType="numeric"
                           style={styles.modalInput}
-                          mode="outlined"
                           left={<TextInput.Icon icon="star" />}
                           outlineColor={theme.colors.primary}
                           activeOutlineColor={theme.colors.primary}
@@ -427,13 +427,13 @@ export default function HomeScreen() {
                       <View style={styles.editSection}>
                         <Text style={styles.editSectionTitle}>Sinopse</Text>
                         <TextInput
+                          mode="outlined"
                           label="Descrição"
                           value={editedAnime.description}
                           onChangeText={(text) => setEditedAnime({ ...editedAnime, description: text })}
                           multiline
                           numberOfLines={6}
                           style={[styles.modalInput, styles.descriptionInput]}
-                          mode="outlined"
                           left={<TextInput.Icon icon="text" />}
                           outlineColor={theme.colors.primary}
                           activeOutlineColor={theme.colors.primary}
