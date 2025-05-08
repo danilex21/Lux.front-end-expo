@@ -1,13 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, Dimensions, Image, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Card, IconButton, Modal, Paragraph, Portal, Text, Title } from 'react-native-paper';
+import { Animated, Dimensions, Image, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Button, Card, Chip, IconButton, Modal, Paragraph, Portal, Text, Title } from 'react-native-paper';
 import { styles as globalStyles, theme } from '../../constants/theme';
 import { animeService } from '../../services/animeService';
 import { Anime, AnimeSearchResult } from '../../types/anime';
 
 const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.4; // Reduzido para 40% da largura da tela
-const CARD_HEIGHT = CARD_WIDTH * 1.4;
+const FEATURED_WIDTH = width;
+const FEATURED_HEIGHT = width * 0.5;
+const CARD_WIDTH = width * 0.3;
+const CARD_HEIGHT = CARD_WIDTH * 1.3;
 
 export default function HomeScreen() {
   const [topAnimes, setTopAnimes] = useState<AnimeSearchResult[]>([]);
@@ -21,6 +23,19 @@ export default function HomeScreen() {
   const topScrollViewRef = useRef<ScrollView>(null);
   const popularScrollViewRef = useRef<ScrollView>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [editMode, setEditMode] = useState(false);
+  const [editedAnime, setEditedAnime] = useState<{
+    title: string;
+    description: string;
+    rating: string;
+    genre: string;
+  } | null>(null);
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [availableGenres] = useState([
+    'Ação', 'Aventura', 'Comédia', 'Drama', 'Fantasia', 'Horror',
+    'Mistério', 'Romance', 'Sci-Fi', 'Slice of Life', 'Suspense',
+    'Esportes', 'Sobrenatural', 'Psicológico', 'Mecha', 'Musical'
+  ]);
 
   useEffect(() => {
     loadAnimes();
@@ -54,25 +69,37 @@ export default function HomeScreen() {
 
   const handleAnimePress = (anime: AnimeSearchResult) => {
     setSelectedAnime(anime);
+    const genres = anime.genres?.map(g => g.name) || [];
+    setSelectedGenres(genres);
+    setEditedAnime({
+      title: anime.title,
+      description: anime.synopsis || '',
+      rating: anime.score?.toString() || '0',
+      genre: genres.join(', '),
+    });
+    setEditMode(false);
     setModalVisible(true);
   };
 
-  const handleAddToCollection = async () => {
-    if (!selectedAnime) return;
+  const handleSaveToCollection = async () => {
+    if (!selectedAnime || !editedAnime) return;
 
     try {
       const anime: Anime = {
         id: Date.now(),
-        title: selectedAnime.title,
-        description: selectedAnime.synopsis,
-        rating: selectedAnime.score.toString(),
-        genre: selectedAnime.genres.map(g => g.name).join(', '),
+        title: editedAnime.title,
+        description: editedAnime.description,
+        rating: editedAnime.rating,
+        genre: selectedGenres.join(', '),
         image: selectedAnime.images.jpg.image_url,
         mal_id: selectedAnime.mal_id,
       };
 
       await animeService.saveAnime(anime);
       setModalVisible(false);
+      setEditMode(false);
+      setEditedAnime(null);
+      setSelectedGenres([]);
     } catch (err) {
       setError('Erro ao adicionar anime à coleção');
       console.error(err);
@@ -131,6 +158,45 @@ export default function HomeScreen() {
     );
   }
 
+  const renderFeaturedAnime = (anime: AnimeSearchResult) => {
+    return (
+      <View style={styles.featuredContainer}>
+        <Image
+          source={{ uri: anime.images.jpg.large_image_url || anime.images.jpg.image_url }}
+          style={styles.featuredImage}
+          resizeMode="cover"
+        />
+        <View style={styles.featuredGradient}>
+          <View style={styles.featuredContent}>
+            <View style={styles.featuredInfo}>
+              <Title style={styles.featuredTitle} numberOfLines={2}>
+                {anime.title}
+              </Title>
+              <View style={styles.featuredDetails}>
+                <Text style={styles.featuredRating}>⭐ {anime.score}</Text>
+                <Text style={styles.featuredGenres} numberOfLines={1}>
+                  {anime.genres.map(g => g.name).join(' • ')}
+                </Text>
+              </View>
+              <Paragraph style={styles.featuredSynopsis} numberOfLines={2}>
+                {anime.synopsis}
+              </Paragraph>
+            </View>
+            <View style={styles.featuredActions}>
+              <Button
+                mode="contained"
+                onPress={() => handleAnimePress(anime)}
+                style={styles.featuredButton}
+              >
+                Ver Detalhes
+              </Button>
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   const renderCarousel = (title: string, animes: AnimeSearchResult[], type: 'top' | 'popular') => {
     const currentIndex = type === 'top' ? currentTopIndex : currentPopularIndex;
     const scrollViewRef = type === 'top' ? topScrollViewRef : popularScrollViewRef;
@@ -154,7 +220,7 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.horizontalScroll}
             pagingEnabled
-            snapToInterval={CARD_WIDTH + theme.spacing.md}
+            snapToInterval={CARD_WIDTH + theme.spacing.sm}
             decelerationRate="fast"
             onScroll={(e) => handleScroll(e, type)}
             scrollEventThrottle={16}
@@ -173,9 +239,9 @@ export default function HomeScreen() {
                   <Title style={styles.animeTitle} numberOfLines={2}>
                     {anime.title}
                   </Title>
-                  <Paragraph style={styles.animeRating}>
-                    Nota: {anime.score}
-                  </Paragraph>
+                  <Text style={styles.animeRating}>
+                    ⭐ {anime.score}
+                  </Text>
                 </View>
               </Card>
             ))}
@@ -208,6 +274,7 @@ export default function HomeScreen() {
   return (
     <ScrollView style={globalStyles.container}>
       <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+        {popularAnimes.length > 0 && renderFeaturedAnime(popularAnimes[0])}
         {renderCarousel('Os mais vistos da semana', popularAnimes, 'popular')}
         {renderCarousel('Os mais avaliados', topAnimes, 'top')}
       </Animated.View>
@@ -215,61 +282,167 @@ export default function HomeScreen() {
       <Portal>
         <Modal
           visible={modalVisible}
-          onDismiss={() => setModalVisible(false)}
+          onDismiss={() => {
+            setModalVisible(false);
+            setEditMode(false);
+            setEditedAnime(null);
+          }}
           contentContainerStyle={styles.modalContainer}
         >
-          {selectedAnime && (
-            <View style={styles.modalWrapper}>
-              <View style={styles.modalImageContainer}>
-                <Image
-                  source={{ uri: selectedAnime.images.jpg.image_url }}
-                  style={styles.modalImage}
-                  resizeMode="cover"
-                />
-                <View style={styles.modalOverlay}>
-                  <IconButton
-                    icon="close"
-                    iconColor={theme.colors.surface}
-                    size={24}
-                    onPress={() => setModalVisible(false)}
-                    style={styles.closeButton}
+          {selectedAnime && editedAnime && (
+            <ScrollView style={styles.modalScroll}>
+              <View style={styles.modalWrapper}>
+                <View style={styles.modalImageContainer}>
+                  <Image
+                    source={{ uri: selectedAnime.images.jpg.image_url }}
+                    style={styles.modalImage}
+                    resizeMode="cover"
                   />
+                  <View style={styles.modalOverlay}>
+                    <IconButton
+                      icon="close"
+                      iconColor={theme.colors.surface}
+                      size={24}
+                      onPress={() => {
+                        setModalVisible(false);
+                        setEditMode(false);
+                        setEditedAnime(null);
+                      }}
+                      style={styles.closeButton}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.modalContent}>
+                  {editMode ? (
+                    <View style={styles.editContainer}>
+                      <View style={styles.editSection}>
+                        <Text style={styles.editSectionTitle}>Informações Básicas</Text>
+                        <TextInput
+                          label="Título"
+                          value={editedAnime.title}
+                          onChangeText={(text) => setEditedAnime({ ...editedAnime, title: text })}
+                          style={styles.modalInput}
+                          mode="outlined"
+                          left={<TextInput.Icon icon="format-title" />}
+                          outlineColor={theme.colors.primary}
+                          activeOutlineColor={theme.colors.primary}
+                        />
+                        <TextInput
+                          label="Nota"
+                          value={editedAnime.rating}
+                          onChangeText={(text) => setEditedAnime({ ...editedAnime, rating: text })}
+                          keyboardType="numeric"
+                          style={styles.modalInput}
+                          mode="outlined"
+                          left={<TextInput.Icon icon="star" />}
+                          outlineColor={theme.colors.primary}
+                          activeOutlineColor={theme.colors.primary}
+                        />
+                      </View>
+
+                      <View style={styles.editSection}>
+                        <Text style={styles.editSectionTitle}>Gêneros</Text>
+                        <View style={styles.genresContainer}>
+                          {availableGenres.map((genre) => (
+                            <Chip
+                              key={genre}
+                              selected={selectedGenres.includes(genre)}
+                              onPress={() => {
+                                if (selectedGenres.includes(genre)) {
+                                  setSelectedGenres(selectedGenres.filter(g => g !== genre));
+                                } else {
+                                  setSelectedGenres([...selectedGenres, genre]);
+                                }
+                              }}
+                              style={styles.genreChip}
+                              mode="outlined"
+                            >
+                              {genre}
+                            </Chip>
+                          ))}
+                        </View>
+                      </View>
+
+                      <View style={styles.editSection}>
+                        <Text style={styles.editSectionTitle}>Sinopse</Text>
+                        <TextInput
+                          label="Descrição"
+                          value={editedAnime.description}
+                          onChangeText={(text) => setEditedAnime({ ...editedAnime, description: text })}
+                          multiline
+                          numberOfLines={6}
+                          style={[styles.modalInput, styles.descriptionInput]}
+                          mode="outlined"
+                          left={<TextInput.Icon icon="text" />}
+                          outlineColor={theme.colors.primary}
+                          activeOutlineColor={theme.colors.primary}
+                        />
+                      </View>
+
+                      <View style={styles.modalActions}>
+                        <Button
+                          mode="outlined"
+                          onPress={() => {
+                            setEditMode(false);
+                            setEditedAnime({
+                              title: selectedAnime.title,
+                              description: selectedAnime.synopsis || '',
+                              rating: selectedAnime.score?.toString() || '0',
+                              genre: selectedGenres.join(', '),
+                            });
+                          }}
+                          style={styles.modalActionButton}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          mode="contained"
+                          onPress={handleSaveToCollection}
+                          style={styles.modalActionButton}
+                        >
+                          Salvar
+                        </Button>
+                      </View>
+                    </View>
+                  ) : (
+                    <>
+                      <Title style={styles.modalTitle}>{editedAnime.title}</Title>
+                      <View style={styles.modalInfoContainer}>
+                        <View style={styles.modalInfoItem}>
+                          <Text style={styles.modalInfoLabel}>Nota</Text>
+                          <Text style={styles.modalInfoValue}>⭐ {editedAnime.rating}</Text>
+                        </View>
+                        <View style={styles.modalInfoItem}>
+                          <Text style={styles.modalInfoLabel}>Gêneros</Text>
+                          <Text style={styles.modalInfoValue}>{editedAnime.genre}</Text>
+                        </View>
+                      </View>
+                      <View style={styles.modalDescription}>
+                        <Text style={styles.modalDescriptionTitle}>Sinopse</Text>
+                        <Text style={styles.modalDescriptionText}>{editedAnime.description}</Text>
+                      </View>
+                      <View style={styles.modalActions}>
+                        <Button
+                          mode="outlined"
+                          onPress={() => setModalVisible(false)}
+                          style={styles.modalActionButton}
+                        >
+                          Cancelar
+                        </Button>
+                        <Button
+                          mode="contained"
+                          onPress={() => setEditMode(true)}
+                          style={styles.modalActionButton}
+                        >
+                          Editar
+                        </Button>
+                      </View>
+                    </>
+                  )}
                 </View>
               </View>
-
-              <ScrollView style={styles.modalContent}>
-                <Text style={styles.modalTitle}>{selectedAnime.title}</Text>
-                
-                <View style={styles.modalInfoContainer}>
-                  <View style={styles.modalInfoItem}>
-                    <Text style={styles.modalInfoLabel}>Nota</Text>
-                    <Text style={styles.modalInfoValue}>{selectedAnime.score}</Text>
-                  </View>
-                  <View style={styles.modalInfoItem}>
-                    <Text style={styles.modalInfoLabel}>Gêneros</Text>
-                    <Text style={styles.modalInfoValue} numberOfLines={1}>
-                      {selectedAnime.genres.map(g => g.name).join(', ')}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.modalDescription}>
-                  <Text style={styles.modalDescriptionTitle}>Sinopse</Text>
-                  <Text style={styles.modalDescriptionText}>
-                    {selectedAnime.synopsis}
-                  </Text>
-                </View>
-
-                <Button
-                  mode="contained"
-                  onPress={handleAddToCollection}
-                  style={styles.addButton}
-                  icon="plus"
-                >
-                  Adicionar à Coleção
-                </Button>
-              </ScrollView>
-            </View>
+            </ScrollView>
           )}
         </Modal>
       </Portal>
@@ -280,7 +453,69 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: theme.spacing.lg,
+  },
+  featuredContainer: {
+    width: FEATURED_WIDTH,
+    height: FEATURED_HEIGHT,
+    position: 'relative',
+    marginBottom: theme.spacing.lg,
+  },
+  featuredImage: {
+    width: '100%',
+    height: '100%',
+  },
+  featuredGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '100%',
+    backgroundColor: 'rgba(0,0,0,0.7)',
+  },
+  featuredContent: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: theme.spacing.lg,
+  },
+  featuredInfo: {
+    marginBottom: theme.spacing.md,
+  },
+  featuredTitle: {
+    color: theme.colors.surface,
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: theme.spacing.sm,
+  },
+  featuredDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.sm,
+  },
+  featuredRating: {
+    color: theme.colors.surface,
+    marginRight: theme.spacing.md,
+    fontSize: 16,
+  },
+  featuredGenres: {
+    color: theme.colors.surface,
+    opacity: 0.9,
+    fontSize: 14,
+    flex: 1,
+  },
+  featuredSynopsis: {
+    color: theme.colors.surface,
+    opacity: 0.9,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  featuredActions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+  },
+  featuredButton: {
+    marginRight: theme.spacing.md,
   },
   section: {
     marginBottom: theme.spacing.xl,
@@ -316,28 +551,30 @@ const styles = StyleSheet.create({
   },
   animeCard: {
     width: CARD_WIDTH,
-    marginRight: theme.spacing.md,
+    marginRight: theme.spacing.sm,
     backgroundColor: theme.colors.card,
     elevation: 2,
     borderRadius: theme.borderRadius.md,
+    overflow: 'hidden',
   },
   animeImage: {
     width: '100%',
     height: CARD_HEIGHT,
-    borderTopLeftRadius: theme.borderRadius.md,
-    borderTopRightRadius: theme.borderRadius.md,
   },
   animeInfo: {
-    padding: theme.spacing.sm,
+    padding: theme.spacing.xs,
+    height: 60,
   },
   animeTitle: {
     ...theme.typography.subtitle,
-    fontSize: 14,
+    fontSize: 12,
     marginBottom: theme.spacing.xs,
+    height: 32,
   },
   animeRating: {
     ...theme.typography.caption,
-    fontSize: 12,
+    fontSize: 10,
+    color: theme.colors.primary,
   },
   pagination: {
     flexDirection: 'row',
@@ -376,12 +613,15 @@ const styles = StyleSheet.create({
     margin: 0,
     flex: 1,
   },
+  modalScroll: {
+    flex: 1,
+  },
   modalWrapper: {
     flex: 1,
   },
   modalImageContainer: {
     position: 'relative',
-    height: 400,
+    height: 300,
   },
   modalImage: {
     width: '100%',
@@ -401,11 +641,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-    borderTopLeftRadius: theme.borderRadius.xl,
-    borderTopRightRadius: theme.borderRadius.xl,
-    marginTop: -theme.borderRadius.xl,
     padding: theme.spacing.lg,
   },
   modalTitle: {
@@ -445,7 +680,47 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: theme.colors.text,
   },
-  addButton: {
-    marginTop: theme.spacing.md,
+  modalInput: {
+    marginBottom: theme.spacing.md,
+    backgroundColor: theme.colors.surface,
+    fontSize: 16,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: theme.spacing.lg,
+  },
+  modalActionButton: {
+    flex: 1,
+    marginHorizontal: theme.spacing.sm,
+  },
+  editContainer: {
+    flex: 1,
+  },
+  editSection: {
+    marginBottom: theme.spacing.lg,
+  },
+  editSectionTitle: {
+    ...theme.typography.subtitle,
+    marginBottom: theme.spacing.sm,
+    color: theme.colors.primary,
+    fontWeight: '600',
+    fontSize: 18,
+  },
+  descriptionInput: {
+    height: 120,
+    textAlignVertical: 'top',
+    paddingTop: theme.spacing.sm,
+  },
+  genresContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: theme.spacing.sm,
+    padding: theme.spacing.sm,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.borderRadius.md,
+  },
+  genreChip: {
+    margin: 2,
   },
 });
