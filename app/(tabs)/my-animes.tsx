@@ -480,7 +480,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     paddingHorizontal: 10,
     paddingVertical: 8,
-    backgroundColor: 'rgba(36, 34, 34, 0.55)',
     borderBottomLeftRadius: 16,
     borderTopRightRadius: 12,
     maxWidth: '100%',
