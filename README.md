@@ -2,7 +2,7 @@
 
 Um aplicativo mobile moderno para colecionadores de animes, desenvolvido com React Native e Expo.
 
-![Lux Anime App](https://via.placeholder.com/800x450/2a2a2a/ffffff?text=Lux+Anime+App)
+<img src="img/Captura de tela 2025-05-20 095429.png" alt="Lux Anime App">
 
 ## Sobre
 
