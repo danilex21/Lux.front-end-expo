@@ -1,0 +1,50 @@
+-- Começo do back, fazendo apenas para mentalizar oque devo armazenar --
+
+@Entity
+public class Anime {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String title;
+    private String description;
+    private String rating;
+    private String genre;
+    private String image;
+    private boolean isFavorite;
+    private boolean isFeatured;
+    private Long malId;
+    // getters, setters, etc.
+}
+
+
+@RestController
+@RequestMapping("/api/animes")
+public class AnimeController {
+    @Autowired
+    private AnimeService animeService;
+
+    @GetMapping
+    public List<Anime> getAllAnimes() {
+        return animeService.findAll();
+    }
+
+    @GetMapping("/{id}")
+    public Anime getAnime(@PathVariable Long id) {
+        return animeService.findById(id);
+    }
+
+    @PostMapping
+    public Anime createAnime(@RequestBody Anime anime) {
+        return animeService.save(anime);
+    }
+
+    @PutMapping("/{id}")
+    public Anime updateAnime(@PathVariable Long id, @RequestBody Anime anime) {
+        return animeService.update(id, anime);
+    }
+
+    @DeleteMapping("/{id}")
+    public void deleteAnime(@PathVariable Long id) {
+        animeService.delete(id);
+    }
+}
