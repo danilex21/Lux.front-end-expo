@@ -1,6 +1,6 @@
 import { Anime, AnimeSearchResult } from '../types/anime';
 
-const API_URL = 'http://localhost:8080/api'; // URL do backend
+const API_URL = 'https://lux-b0a4hhcwf2eveyd0.brazilsouth-01.azurewebsites.net/api'; // URL do backend
 const STORAGE_KEY = '@anime_collection';
 
 export const animeService = {
