@@ -60,7 +60,6 @@ Lux é um aplicativo mobile moderno para colecionadores de animes, desenvolvido 
 - 🎴 Cards de anime
 - 🪟 Modais
 - 🔘 Botões personalizados
-- 🎯 Elementos de UI compartilhados
 
 ---
 
