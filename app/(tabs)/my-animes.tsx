@@ -1,19 +1,20 @@
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { Animated, Image, ImageBackground, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Card, Chip, IconButton, Modal, Portal, Snackbar, Text, TextInput, Title } from 'react-native-paper';
+import { ActivityIndicator, Button, Card, Chip, IconButton, Modal, Portal, Searchbar, Snackbar, Text, TextInput, Title } from 'react-native-paper';
 import { styles as globalStyles, theme } from '../../constants/theme';
 import { animeService } from '../../services/animeService';
 import { Anime } from '../../types/anime';
 
 export default function MyAnimesScreen() {
   const [animes, setAnimes] = useState<Anime[]>([]);
+  const [filteredAnimes, setFilteredAnimes] = useState<Anime[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedAnime, setSelectedAnime] = useState<Anime | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingAnime, setEditingAnime] = useState<Anime | null>(null);
-  const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
   const [snackbarVisible, setSnackbarVisible] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
@@ -36,6 +37,10 @@ export default function MyAnimesScreen() {
     }
   }, [editingAnime]);
 
+  useEffect(() => {
+    filterAnimes();
+  }, [searchQuery, showFeaturedOnly, animes]);
+
   React.useEffect(() => {
     Animated.timing(fadeAnim, {
       toValue: 1,
@@ -56,6 +61,7 @@ export default function MyAnimesScreen() {
       setError(null);
       const data = await animeService.getAnimes();
       setAnimes(data);
+      setFilteredAnimes(data);
     } catch (err) {
       setError('Erro ao carregar animes');
       showSnackbar('Erro ao carregar animes', 'error');
@@ -64,6 +70,31 @@ export default function MyAnimesScreen() {
       setLoading(false);
       setRefreshing(false);
     }
+  };
+
+  const filterAnimes = async () => {
+    try {
+      let filtered = [...animes];
+
+      // Aplicar filtro de pesquisa
+      if (searchQuery.trim()) {
+        const searchResults = await animeService.searchMyAnimes(searchQuery);
+        filtered = searchResults;
+      }
+
+      // Aplicar filtro de destaque
+      if (showFeaturedOnly) {
+        filtered = filtered.filter(anime => anime.isFeatured);
+      }
+
+      setFilteredAnimes(filtered);
+    } catch (err) {
+      console.error('Erro ao filtrar animes:', err);
+    }
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
   };
 
   const handleAnimePress = (anime: Anime) => {
@@ -117,25 +148,6 @@ export default function MyAnimesScreen() {
     }
   };
 
-  const handleToggleFavorite = async (anime: Anime) => {
-    try {
-      setLoading(true);
-      const updatedAnime = { ...anime, isFavorite: !anime.isFavorite };
-      await animeService.updateAnime(updatedAnime);
-      setAnimes(animes.map(a => a.id === anime.id ? updatedAnime : a));
-      showSnackbar(
-        updatedAnime.isFavorite ? 'Anime adicionado aos favoritos!' : 'Anime removido dos favoritos!',
-        'success'
-      );
-    } catch (err) {
-      setError('Erro ao atualizar anime');
-      showSnackbar('Erro ao atualizar anime', 'error');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleToggleFeatured = async (anime: Anime) => {
     try {
       setLoading(true);
@@ -153,12 +165,6 @@ export default function MyAnimesScreen() {
       setLoading(false);
     }
   };
-
-  const filteredAnimes = animes.filter(anime => {
-    if (showFavoritesOnly) return anime.isFavorite;
-    if (showFeaturedOnly) return anime.isFeatured;
-    return true;
-  });
 
   const handleRefresh = () => {
     setRefreshing(true);
@@ -198,33 +204,17 @@ export default function MyAnimesScreen() {
         <Text style={globalStyles.title}>Meus Animes</Text>
         <View style={styles.headerButtons}>
           <Text style={styles.filterCount}>
-            {showFavoritesOnly 
-              ? `${animes.filter(anime => anime.isFavorite).length} favoritos`
-              : showFeaturedOnly
-                ? `${animes.filter(anime => anime.isFeatured).length} em destaque`
-                : `${animes.length} animes`
-            }
+            {`${animes.length} animes`}
           </Text>
-          <IconButton
-            icon={showFeaturedOnly ? 'star' : 'star-outline'}
-            iconColor={showFeaturedOnly ? theme.colors.primary : theme.colors.text}
-            size={24}
-            onPress={() => {
-              setShowFeaturedOnly(!showFeaturedOnly);
-              setShowFavoritesOnly(false);
-            }}
-          />
-          <IconButton
-            icon={showFavoritesOnly ? 'heart' : 'heart-outline'}
-            iconColor={showFavoritesOnly ? theme.colors.primary : theme.colors.text}
-            size={24}
-            onPress={() => {
-              setShowFavoritesOnly(!showFavoritesOnly);
-              setShowFeaturedOnly(false);
-            }}
-          />
         </View>
       </View>
+
+      <Searchbar
+        placeholder="Pesquisar animes..."
+        onChangeText={handleSearch}
+        value={searchQuery}
+        style={styles.searchBar}
+      />
 
       <ScrollView 
         style={styles.container}
@@ -315,27 +305,12 @@ export default function MyAnimesScreen() {
         >
           {editingAnime && (
             <View>
-              <View style={{ width: '100%', height: 200, position: 'relative' }}>
-                <Image
-                  source={{ uri: editingAnime.imageUrl }}
-                  style={{ width: '100%', height: '100%' }}
-                  resizeMode="cover"
-                />
-                <IconButton
-                  icon="close"
-                  size={24}
-                  onPress={() => setEditModalVisible(false)}
-                  style={{ position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(0,0,0,0.3)' }}
-                  iconColor="#fff"
-                />
-              </View>
-              <View style={{ alignItems: 'center', padding: 24 }}>
-                <Title style={{ fontSize: 20, marginBottom: 12 }}>Editar Anime</Title>
+              <View style={{ padding: 24 }}>
                 <TextInput
                   label="Título"
                   value={editingAnime.title}
                   onChangeText={(text) => setEditingAnime({ ...editingAnime, title: text })}
-                  style={{ width: '100%', marginBottom: 12 }}
+                  style={{ marginBottom: 16 }}
                   mode="outlined"
                 />
                 <TextInput
@@ -344,7 +319,7 @@ export default function MyAnimesScreen() {
                   onChangeText={(text) => setEditingAnime({ ...editingAnime, description: text })}
                   multiline
                   numberOfLines={4}
-                  style={{ width: '100%', marginBottom: 12 }}
+                  style={{ marginBottom: 16 }}
                   mode="outlined"
                 />
                 <TextInput
@@ -357,21 +332,9 @@ export default function MyAnimesScreen() {
                     }
                   }}
                   keyboardType="numeric"
-                  style={{ width: '100%', marginBottom: 12 }}
+                  style={{ marginBottom: 16 }}
                   mode="outlined"
                 />
-                <Button
-                  mode="outlined"
-                  onPress={() => setGenreModalVisible(true)}
-                  style={{ width: '100%', marginBottom: 12 }}
-                >
-                  Selecionar Gêneros
-                </Button>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginBottom: 16, justifyContent: 'center' }}>
-                  {selectedGenres.map((genre) => (
-                    <Chip key={genre} style={{ margin: 2 }}>{genre}</Chip>
-                  ))}
-                </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 12 }}>
                   <Button mode="outlined" onPress={() => setEditModalVisible(false)}>Cancelar</Button>
                   <Button mode="contained" onPress={handleSaveEdit}>Salvar</Button>
@@ -492,7 +455,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 2,
-    flexShrink: 0,
+    flex: 1,
+    marginRight: 8,
   },
   cardInfoRow: {
     flexDirection: 'row',
@@ -687,5 +651,9 @@ const styles = StyleSheet.create({
   },
   selectedGenreChipText: {
     color: theme.colors.surface,
+  },
+  searchBar: {
+    margin: theme.spacing.md,
+    elevation: 2,
   },
 }); 

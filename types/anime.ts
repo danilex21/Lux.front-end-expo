@@ -2,12 +2,11 @@ export interface Anime {
   id: number;
   title: string;
   description: string;
-  rating: number; // Alterado de string para number para corresponder ao Double do backend
+  rating: number;
   genre: string;
   imageUrl: string;
-  mal_id?: number; // ID do MyAnimeList (quando vier da API)
-  isFavorite?: boolean; // Campo para controlar se o anime é favorito
-  isFeatured?: boolean; // Campo para controlar se o anime está em destaque
+  isFeatured: boolean;
+  malId: number;
   // Novos campos
   episodes?: string;
   status?: string;
@@ -27,29 +26,19 @@ export interface Anime {
   broadcast?: string;
   popularity?: string;
   members?: string;
-  favorites?: string;
-  releaseDate?: string;
 }
 
 export interface AnimeSearchResult {
   mal_id: number;
   title: string;
   synopsis: string;
+  score: number;
+  genres: Array<{ name: string }>;
   images: {
     jpg: {
       image_url: string;
       large_image_url: string;
-    };
-  };
-  genres: Array<{
-    name: string;
-  }>;
-  score: number;
-  status: string;
-  episodes: number;
-  type: string;
-  aired: {
-    string: string;
+    }
   };
 }
 

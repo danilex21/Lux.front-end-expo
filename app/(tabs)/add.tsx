@@ -2,7 +2,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { router } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Alert, Animated, Image, ScrollView, StyleSheet, View } from 'react-native';
-import { ActivityIndicator, Button, Card, Chip, IconButton, Modal, Portal, Searchbar, Snackbar, Switch, Text, TextInput } from 'react-native-paper';
+import { ActivityIndicator, Button, Card, Chip, IconButton, Modal, Portal, Searchbar, Snackbar, Text, TextInput } from 'react-native-paper';
 import { styles as globalStyles, theme } from '../../constants/theme';
 import { animeService } from '../../services/animeService';
 import { Anime, AnimeSearchResult } from '../../types/anime';
@@ -31,11 +31,11 @@ export default function AddAnimeScreen() {
   const [animeData, setAnimeData] = useState<Omit<Anime, 'id'>>({
     title: '',
     description: '',
-    rating: '',
+    rating: 0,
     genre: '',
     imageUrl: '',
-    isFavorite: false,
-    mal_id: 0,
+    malId: 0,
+    isFeatured: false
   });
   const [selectedAnime, setSelectedAnime] = useState<AnimeSearchResult | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
@@ -133,7 +133,7 @@ export default function AddAnimeScreen() {
     try {
       setLoading(true);
       const existingAnimes = await animeService.getAnimes();
-      const isDuplicate = existingAnimes.some(anime => anime.mal_id === selectedAnime.mal_id);
+      const isDuplicate = existingAnimes.some(anime => anime.malId === selectedAnime.mal_id);
 
       if (isDuplicate) {
         Alert.alert('Erro', 'Este anime já está na sua coleção!');
@@ -144,11 +144,10 @@ export default function AddAnimeScreen() {
         id: Date.now(),
         title: selectedAnime.title,
         description: selectedAnime.synopsis || '',
-        rating: selectedAnime.score?.toString() || '0',
+        rating: selectedAnime.score || 0,
         genre: selectedAnime.genres?.map(g => g.name).join(', ') || '',
         imageUrl: selectedAnime.images?.jpg?.large_image_url || selectedAnime.images?.jpg?.image_url || 'https://via.placeholder.com/150',
-        mal_id: selectedAnime.mal_id,
-        isFavorite: false,
+        malId: selectedAnime.mal_id,
         isFeatured: false
       };
 
@@ -158,14 +157,12 @@ export default function AddAnimeScreen() {
       setSearchQuery('');
       setSearchResults([]);
       
-      // Navegar para a tela Meus Animes com parâmetro de atualização
       router.replace({
         pathname: '/my-animes',
         params: { refresh: Date.now() }
       });
     } catch (err) {
       console.error('Erro ao salvar anime:', err);
-      Alert.alert('Erro', 'Não foi possível salvar o anime. Tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -182,7 +179,7 @@ export default function AddAnimeScreen() {
       setError(null);
       setShowForm(false);
 
-      const rating = parseFloat(animeData.rating);
+      const rating = animeData.rating;
       if (isNaN(rating) || rating < 0 || rating > 10) {
         setError('A nota deve estar entre 0 e 10');
         showSnackbar('A nota deve estar entre 0 e 10', 'error');
@@ -193,22 +190,22 @@ export default function AddAnimeScreen() {
         id: Date.now(),
         title: animeData.title,
         description: animeData.description,
-        rating: rating.toString(),
+        rating: rating,
         genre: selectedGenres.join(', '),
         imageUrl: selectedImage || 'https://via.placeholder.com/300x400',
-        isFavorite: animeData.isFavorite,
         isFeatured: false,
+        malId: 0
       };
 
       await animeService.saveAnime(anime);
       setAnimeData({
         title: '',
         description: '',
-        rating: '',
+        rating: 0,
         genre: '',
         imageUrl: '',
-        isFavorite: false,
-        mal_id: 0,
+        malId: 0,
+        isFeatured: false
       });
       setSearchQuery('');
       setSelectedImage(null);
@@ -335,11 +332,11 @@ export default function AddAnimeScreen() {
                       setAnimeData({
                         title: '',
                         description: '',
-                        rating: '',
+                        rating: 0,
                         genre: '',
                         imageUrl: '',
-                        isFavorite: false,
-                        mal_id: 0,
+                        malId: 0,
+                        isFeatured: false
                       });
                       setSelectedImage(null);
                       setSelectedGenres([]);
@@ -397,11 +394,11 @@ export default function AddAnimeScreen() {
 
                 <TextInput
                   label="Nota (0-10)"
-                  value={animeData.rating}
+                  value={animeData.rating.toString()}
                   onChangeText={(text) => {
                     const num = parseFloat(text);
                     if (!isNaN(num) && num >= 0 && num <= 10) {
-                      setAnimeData(prev => ({ ...prev, rating: text }));
+                      setAnimeData(prev => ({ ...prev, rating: num }));
                     }
                   }}
                   keyboardType="numeric"
@@ -430,15 +427,6 @@ export default function AddAnimeScreen() {
                       </Chip>
                     ))}
                   </View>
-                </View>
-
-                <View style={styles.favoriteContainer}>
-                  <Text style={styles.favoriteLabel}>Favorito</Text>
-                  <Switch
-                    value={animeData.isFavorite}
-                    onValueChange={(value) => setAnimeData(prev => ({ ...prev, isFavorite: value }))}
-                    color={theme.colors.primary}
-                  />
                 </View>
 
                 <Button
@@ -494,7 +482,7 @@ export default function AddAnimeScreen() {
               <Text style={styles.modalInfo}>
                 Gêneros: {selectedAnime.genres.map(g => g.name).join(', ')}
               </Text>
-              <View style={styles.modalButtons}>
+              <View style={styles.modalActions}>
                 <Button
                   mode="outlined"
                   onPress={() => setModalVisible(false)}
@@ -726,7 +714,7 @@ const styles = StyleSheet.create({
     ...theme.typography.caption,
     marginBottom: theme.spacing.sm,
   },
-  modalButtons: {
+  modalActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: theme.spacing.lg,

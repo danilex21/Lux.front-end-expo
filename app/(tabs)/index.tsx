@@ -143,11 +143,10 @@ export default function HomeScreen() {
         id: Date.now(),
         title: editedAnime.title,
         description: description,
-        rating: editedAnime.rating,
+        rating: parseFloat(editedAnime.rating) || 0,
         genre: selectedGenres.join(', '),
         imageUrl: selectedAnime.images.jpg.large_image_url || selectedAnime.images.jpg.image_url,
-        mal_id: selectedAnime.mal_id,
-        isFavorite: false,
+        malId: selectedAnime.mal_id,
         isFeatured: false
       };
 
@@ -157,7 +156,6 @@ export default function HomeScreen() {
       setEditedAnime(null);
       setSelectedGenres([]);
       
-      // Navegar para a tela Meus Animes com parâmetro de atualização
       router.replace({
         pathname: '/my-animes',
         params: { refresh: Date.now() }
