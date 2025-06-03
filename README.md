@@ -120,10 +120,10 @@ Lux é um aplicativo mobile moderno para colecionadores de animes, desenvolvido 
 
 ```bash
 # Clone o repositório
-git clone https://github.com/seu-usuario/lux-anime-app.git
+git clone https://github.com/danilex21/Lux.front-end-expo
 
 # Entre na pasta do projeto
-cd lux-anime-app
+cd Lux.front-end-expo
 
 # Instale as dependências
 npm install
