@@ -9,7 +9,6 @@ Um aplicativo mobile moderno para colecionadores de animes, desenvolvido com Rea
 Lux é um aplicativo que permite aos usuários:
 - Descobrir novos animes através da API MyAnimeList
 - Adicionar animes à sua coleção pessoal
-- Gerenciar favoritos
 - Explorar informações detalhadas sobre animes
 
 ## Tecnologias
@@ -19,46 +18,63 @@ Lux é um aplicativo que permite aos usuários:
 - React Native Paper
 - TypeScript
 
-## Estrutura do Projeto
+## 📁 Estrutura Detalhada do Projeto
 
-```
-lux-anime-app/
-├── app/                    # Pasta principal do aplicativo
-│   ├── (tabs)/            # Rotas principais do app
-│   │   ├── index.tsx      # Tela inicial com animes populares
-│   │   ├── add.tsx        # Tela de adicionar novos animes
-│   │   └── my-animes.tsx  # Tela de gerenciar coleção
-│   └── _layout.tsx        # Layout principal do app
-├── components/            # Componentes reutilizáveis
-├── constants/            # Constantes e temas
-│   └── theme.ts         # Configurações de tema
-├── services/            # Serviços e integrações
-│   └── animeService.ts  # Serviço de gerenciamento de animes
-├── types/               # Definições de tipos TypeScript
-│   └── anime.ts        # Interfaces relacionadas a animes
-└── assets/             # Recursos estáticos (imagens, fontes)
-```
+### 📂 app/
+Pasta principal do aplicativo que contém todas as telas e rotas.
 
-### Descrição das Pastas
+#### 📂 (tabs)/
+Rotas principais organizadas em abas de navegação:
+- `index.tsx` - Tela inicial com animes populares e em destaque
+- `add.tsx` - Tela para adicionar novos animes à coleção
+- `my-animes.tsx` - Tela para gerenciar a coleção pessoal
 
-- **app/**: Contém todas as telas e rotas do aplicativo usando Expo Router
-  - **(tabs)/**: Rotas principais organizadas em abas
-  - **_layout.tsx**: Define o layout base do aplicativo
+#### 📄 _layout.tsx
+Define o layout base do aplicativo, incluindo:
+- Configuração da navegação
+- Tema global
+- Estrutura de abas
 
-- **components/**: Componentes React reutilizáveis em todo o app
+### 📂 components/
+Componentes React reutilizáveis:
+- Cards de anime
+- Modais
+- Botões personalizados
+- Elementos de UI compartilhados
 
-- **constants/**: Arquivos de configuração e constantes
-  - **theme.ts**: Define cores, espaçamentos e estilos globais
+### 📂 constants/
+Arquivos de configuração e constantes:
+- `theme.ts` - Define:
+  - Cores do aplicativo
+  - Espaçamentos
+  - Tipografia
+  - Estilos globais
+  - Tamanhos de componentes
 
-- **services/**: Serviços para integração com APIs e gerenciamento de dados
-  - **animeService.ts**: Gerencia todas as operações relacionadas a animes
+### 📂 services/
+Serviços para integração com APIs e gerenciamento de dados:
+- `animeService.ts` - Gerencia:
+  - Busca de animes na API MyAnimeList
+  - Operações CRUD na coleção
+  - Gerenciamento de dados locais
+  - Integração com backend
 
-- **types/**: Definições de tipos TypeScript
-  - **anime.ts**: Interfaces para dados de animes
+### 📂 types/
+Definições de tipos TypeScript:
+- `anime.ts` - Interfaces para:
+  - Dados de anime
+  - Resultados de busca
+  - Respostas da API
+  - Estruturas de dados
 
-- **assets/**: Recursos estáticos como imagens e fontes
+### 📂 assets/
+Recursos estáticos:
+- Imagens
+- Ícones
+- Fontes
+- Recursos visuais
 
-## Instalação
+## 🚀 Instalação
 
 ```bash
 # Instalar dependências
@@ -68,6 +84,19 @@ npm install
 npx expo start
 ```
 
-## Desenvolvimento
+## 💻 Desenvolvimento
 
 Este projeto utiliza Expo Router para navegação baseada em arquivos. A estrutura principal está na pasta `app/(tabs)`.
+
+### 🔄 Fluxo de Dados
+1. Interface do usuário (`app/`)
+2. Componentes reutilizáveis (`components/`)
+3. Serviços de dados (`services/`)
+4. Tipos e interfaces (`types/`)
+5. Configurações globais (`constants/`)
+
+### 🎨 Estilização
+- Utiliza React Native Paper para componentes base
+- Tema personalizado definido em `constants/theme.ts`
+- Estilos específicos em cada componente
+- Design responsivo e adaptativo
