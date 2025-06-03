@@ -10,6 +10,8 @@
 
 </div>
 
+---
+
 ## 📱 Sobre o Projeto
 
 Lux é um aplicativo mobile moderno para colecionadores de animes, desenvolvido com React Native e Expo.
@@ -20,6 +22,8 @@ Lux é um aplicativo mobile moderno para colecionadores de animes, desenvolvido 
 - ➕ Adicionar animes à sua coleção pessoal
 - 🔍 Explorar informações detalhadas sobre animes
 
+---
+
 ## 🛠️ Tecnologias Utilizadas
 
 - [React Native](https://reactnative.dev/) - Framework mobile
@@ -27,7 +31,9 @@ Lux é um aplicativo mobile moderno para colecionadores de animes, desenvolvido 
 - [React Native Paper](https://callstack.github.io/react-native-paper/) - UI Components
 - [TypeScript](https://www.typescriptlang.org/) - Tipagem estática
 
-## 📁 Estrutura Detalhada do Projeto
+---
+
+## 📁 Estrutura do Projeto
 
 ### 📂 `app/`
 > Pasta principal do aplicativo que contém todas as telas e rotas.
@@ -47,12 +53,16 @@ Lux é um aplicativo mobile moderno para colecionadores de animes, desenvolvido 
 - 🎨 Tema global
 - 📱 Estrutura de abas
 
+---
+
 ### 📂 `components/`
 > Componentes React reutilizáveis:
 - 🎴 Cards de anime
 - 🪟 Modais
 - 🔘 Botões personalizados
 - 🎯 Elementos de UI compartilhados
+
+---
 
 ### 📂 `constants/`
 > Arquivos de configuração e constantes:
@@ -65,6 +75,8 @@ Lux é um aplicativo mobile moderno para colecionadores de animes, desenvolvido 
 - 🎯 Estilos globais
 - 📐 Tamanhos de componentes
 
+---
+
 ### 📂 `services/`
 > Serviços para integração com APIs e gerenciamento de dados:
 
@@ -74,6 +86,8 @@ Lux é um aplicativo mobile moderno para colecionadores de animes, desenvolvido 
 - 📝 Operações CRUD na coleção
 - 💾 Gerenciamento de dados locais
 - 🔄 Integração com backend
+
+---
 
 ### 📂 `types/`
 > Definições de tipos TypeScript:
@@ -85,12 +99,16 @@ Lux é um aplicativo mobile moderno para colecionadores de animes, desenvolvido 
 - 📡 Respostas da API
 - 📊 Estruturas de dados
 
+---
+
 ### 📂 `assets/`
 > Recursos estáticos:
 - 🖼️ Imagens
 - 🎯 Ícones
 - 📝 Fontes
 - 🎨 Recursos visuais
+
+---
 
 ## 🚀 Como Começar
 
@@ -114,6 +132,8 @@ npm install
 # Inicie o app
 npx expo start
 ```
+
+---
 
 ## 💻 Desenvolvimento
 
